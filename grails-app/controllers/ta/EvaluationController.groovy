@@ -1,103 +1,133 @@
 package ta
 
-import org.springframework.dao.DataIntegrityViolationException
+import ta.commom.EvaluationBuilder
 
+import static org.springframework.http.HttpStatus.*
+import grails.transaction.Transactional
+
+@Transactional(readOnly = true)
 class EvaluationController {
 
-    static allowedMethods = [save: "POST", update: "POST", delete: "POST"]
+    EvaluationBuilder builder = new EvaluationBuilder()
+    String pageMessage
 
-    def index() {
-        redirect(action: "list", params: params)
+    static allowedMethods = [save: "POST", update: "PUT", delete: "DELETE"]
+
+    def index(Integer max) {
+        params.max = Math.min(max ?: 10, 100)
+        respond Evaluation.list(params), model: [evaluationInstanceCount: Evaluation.count()]
     }
 
-    def list(Integer max) {
-        params.max = Math.min(max ?: 10, 100)
-        [evaluationInstanceList: Evaluation.list(params), evaluationInstanceTotal: Evaluation.count()]
+    def show(Evaluation evaluationInstance) {
+        respond evaluationInstance
     }
 
     def create() {
-        def evaluation = new Evaluation(params)
-        [evaluationInstance: evaluation]
+        respond new Evaluation(params)
     }
 
-    def save() {
-        def evaluationInstance = new Evaluation(params)
-        if (!evaluationInstance.save(flush: true)) {
-            render(view: "create", model: [evaluationInstance: evaluationInstance])
+    @Transactional
+    def save(Evaluation evaluationInstance) {
+        if (evaluationInstance == null) {
+            notFound()
             return
         }
 
-        flash.message = message(code: 'default.created.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), evaluationInstance.id])
-        redirect(action: "show", id: evaluationInstance.id)
-    }
-
-    def show(Long id) {
-        def evaluationInstance = Evaluation.get(id)
-        if (!evaluationInstance) {
-            flash.message = message(code: 'default.not.found.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), id])
-            redirect(action: "list")
+        if (evaluationInstance.hasErrors()) {
+            respond evaluationInstance.errors, view: 'create'
             return
         }
 
-        [evaluationInstance: evaluationInstance]
-    }
+        evaluationInstance.save flush: true
 
-    def edit(Long id) {
-        def evaluationInstance = Evaluation.get(id)
-        if (!evaluationInstance) {
-            flash.message = message(code: 'default.not.found.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), id])
-            redirect(action: "list")
-            return
-        }
-
-        [evaluationInstance: evaluationInstance]
-    }
-
-    def update(Long id, Long version) {
-        def evaluationInstance = Evaluation.get(id)
-        if (!evaluationInstance) {
-            flash.message = message(code: 'default.not.found.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), id])
-            redirect(action: "list")
-            return
-        }
-
-        if (version != null) {
-            if (evaluationInstance.version > version) {
-                evaluationInstance.errors.rejectValue("version", "default.optimistic.locking.failure",
-                        [message(code: 'evaluation.label', default: 'Evaluation')] as Object[],
-                        "Another user has updated this Evaluation while you were editing")
-                render(view: "edit", model: [residueGeneratorInstance: evaluationInstance])
-                return
+        request.withFormat {
+            form multipartForm {
+                flash.message = message(code: 'default.created.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), evaluationInstance.id])
+                redirect evaluationInstance
             }
+            '*' { respond evaluationInstance, [status: CREATED] }
         }
-
-        evaluationInstance.properties = params
-
-        if (!evaluationInstance.save(flush: true)) {
-            render(view: "edit", model: [evaluationInstance: evaluationInstance])
-            return
-        }
-
-        flash.message = message(code: 'default.updated.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), evaluationInstance.id])
-        redirect(action: "show", id: evaluationInstance.id)
     }
 
-    def delete(Long id) {
-        def evaluationInstance = Evaluation.get(id)
-        if (!evaluationInstance) {
-            flash.message = message(code: 'default.not.found.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), id])
-            redirect(action: "list")
+    def edit(Evaluation evaluationInstance) {
+        respond evaluationInstance
+    }
+
+    @Transactional
+    def update(Evaluation evaluationInstance) {
+        if (evaluationInstance == null) {
+            notFound()
             return
         }
+
+        if (evaluationInstance.hasErrors()) {
+            respond evaluationInstance.errors, view: 'edit'
+            return
+        }
+
+        evaluationInstance.save flush: true
+
+        request.withFormat {
+            form multipartForm {
+                flash.message = message(code: 'default.updated.message', args: [message(code: 'Evaluation.label', default: 'Evaluation'), evaluationInstance.id])
+                redirect evaluationInstance
+            }
+            '*' { respond evaluationInstance, [status: OK] }
+        }
+    }
+
+    @Transactional
+    def delete(Evaluation evaluationInstance) {
+
+        if (evaluationInstance == null) {
+            notFound()
+            return
+        }
+
+        evaluationInstance.delete flush: true
+
+        request.withFormat {
+            form multipartForm {
+                flash.message = message(code: 'default.deleted.message', args: [message(code: 'Evaluation.label', default: 'Evaluation'), evaluationInstance.id])
+                redirect action: "index", method: "GET"
+            }
+            '*' { render status: NO_CONTENT }
+        }
+    }
+
+    protected void notFound() {
+        request.withFormat {
+            form multipartForm {
+                flash.message = message(code: 'default.not.found.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), params.id])
+                redirect action: "index", method: "GET"
+            }
+            '*' { render status: NOT_FOUND }
+        }
+    }
+
+
+    //////////////////////////////////////////
+
+    def rippenEvaluation(String title, String questionDescription, String questionAnswer, String questionAlternative) {
 
         try {
-            evaluationInstance.delete(flush: true)
-            flash.message = message(code: 'default.deleted.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), id])
-            redirect(action: "list")
+            builder.createEvaluation()
+            builder.setEvaluationTitle(title)
+            int quesitonIndex = builder.addEvaluationQuestion(questionDescription)
+            builder.setQuestionAnswer(questionIndex, questionAnswer)
+            builder.addQuestionAlternative(questionIndex, questionAlternative)
+
+            Evaluation evaluation = builder.getEvaluation()
+            saveEvaluation(evaluation)
+
+            pageMessage = "Avaliação registrada."
+
+        } catch (Exception e) {
+            pageMessage = "Ocorreu um erro."
         }
-        catch (DataIntegrityViolationException e) {
-            flash.message = message(code: 'default.not.deleted.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), id])
-            redirect(action: "show", id: id)
-        }
+    }
+
+    def saveEvaluation(Evaluation evaluation) {
+        evaluation.save()
     }
 }
