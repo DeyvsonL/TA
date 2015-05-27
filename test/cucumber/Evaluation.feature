@@ -1,9 +1,9 @@
 #Deyvson Lazaro da Silva
 
-Feature: Modify evaluation
+Feature: Evaluation
   As a teacher
-  I want modify my existing evaluations
-  So I can update my evaluations #"So I can test the students better" should be a better reason
+  I want save, modify and remove evaluations
+  So I can send Evaluations for the students and fiz them quickly
 
   Scenario: modify evaluation
     Given I do not have a evaluation with the name "Build of scenarios"

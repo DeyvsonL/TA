@@ -31,3 +31,4 @@ When (~'^I create an evaluation entitled "([^"]*)"$') { String evaluationTitle -
 Then (~'^the evaluation "([^"]*)" should be stored in the system$') { String evaluationTitle ->
 	assert Evaluation.findByTitle(evaluationTitle) != null
 }
+

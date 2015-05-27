@@ -42,7 +42,7 @@ class EvaluationController {
 
         request.withFormat {
             form multipartForm {
-                flash.message = message(code: 'default.created.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), evaluationInstance.id])
+            flash.message = message(code: 'default.created.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), evaluationInstance.id])
                 redirect evaluationInstance
             }
             '*' { respond evaluationInstance, [status: CREATED] }
