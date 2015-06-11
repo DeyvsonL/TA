@@ -12,4 +12,9 @@ class Alternative {
     static constraints = {
         alternative blank: false, unique: true
     }
+
+    String toString(){
+        return this.alternative
+    }
+
 }

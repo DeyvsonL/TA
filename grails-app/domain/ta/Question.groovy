@@ -12,4 +12,8 @@ class Question {
 	static constraints = {
 		question blank: false, unique: true
 	}
+
+	String toString(){
+		return this.question + '\n' + this.answer
+	}
 }
