@@ -1,17 +1,11 @@
-Teaching Assistant Project
+# TA
+teaching assistant system
 
-SDK Config:
-    JDK 7 (7u80)
-    GRAILS 2.4.3
-    Cucumber 1.1.0
-    Geb 0.9.2
-    Selenium 2.39.0
 
-Run Configurations:
+Run configurations:
 
-    run:
-        run-app
+Grails:TA
+run-app
 
-    test:
-    grails test-app functional:cucumber
-
+Cucumber:TA
+grails test-app functional:cucumber

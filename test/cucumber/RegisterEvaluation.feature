@@ -15,15 +15,11 @@ Feature: Register evaluation
 	#	Then I should see "Evaluation registered"
 
 	# after review
-  @ignore
 	Scenario: register evaluation GUI
 			Given I am on Register evaluation page
-			When I fill in the field "title" with "Git evaluation"
-			And I fill in the field "question" "1" with "How does 'git push' works?"
-			And I fill in the field "alternative" "1" with "Sends a file to cloud repositorie"
-			And I fill in the field "alternative" "2" with "gets a file from cloud repositorie"
-			And I press "register" button
-			Then I should see the message "Git evaluation registered"
+			When I fill in the field title with "Refactor evaluation"
+			And I press register button
+			Then I should be on show evaluation page
 
 	# before review
 	#Scenario: register evaluation with no items
@@ -48,10 +44,9 @@ Feature: Register evaluation
 	#	Then I should see "Evaluation already exist"
 
 	# after review
-	@ignore
 	Scenario: register duplicate evaluation
 		Given the system already has an evaluation entitled "Git evaluation" stored
-		When I create evaluation entitledGit evaluation"
+		When I create an evaluation entitled "Git evaluation" with question "How to send files to your repository"
 		Then no evaluation should be store in the system
 
 	# before review
@@ -61,8 +56,7 @@ Feature: Register evaluation
 	#	Then I should see "Evaluation's title is required"
 
 	# after review
-	@ignore
 	Scenario: register evaluation with no title GUI
 		Given I am on Register evaluation page
-		When I press "Register evaluation" button
-		Then I should see the message "Title field is required. no evaluation stored"
+		When I press register button
+		Then I should stay in register evaluation page

@@ -1,6 +1,6 @@
 package ta
 
-import ta.commom.EvaluationBuilder
+import commom.EvaluationBuilder
 
 import static org.springframework.http.HttpStatus.*
 import grails.transaction.Transactional
@@ -42,7 +42,7 @@ class EvaluationController {
 
         request.withFormat {
             form multipartForm {
-            flash.message = message(code: 'default.created.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), evaluationInstance.id])
+                flash.message = message(code: 'default.created.message', args: [message(code: 'evaluation.label', default: 'Evaluation'), evaluationInstance.id])
                 redirect evaluationInstance
             }
             '*' { respond evaluationInstance, [status: CREATED] }
@@ -105,22 +105,26 @@ class EvaluationController {
         }
     }
 
-
     //////////////////////////////////////////
 
     def rippenEvaluation(String title, String questionDescription, String questionAnswer, String questionAlternative) {
 
         try {
             builder.createEvaluation()
-            builder.setEvaluationTitle(title)
-            int quesitonIndex = builder.addEvaluationQuestion(questionDescription)
-            builder.setQuestionAnswer(questionIndex, questionAnswer)
-            builder.addQuestionAlternative(questionIndex, questionAlternative)
+            if (title != null) {
+                builder.setEvaluationTitle(title)
+                int quesitonIndex = builder.addEvaluationQuestion(questionDescription)
+                builder.setQuestionAnswer(questionIndex, questionAnswer)
+                builder.addQuestionAlternative(questionIndex, questionAlternative)
 
-            Evaluation evaluation = builder.getEvaluation()
-            saveEvaluation(evaluation)
+                Evaluation evaluation = builder.getEvaluation()
+                saveEvaluation(evaluation)
 
-            pageMessage = "Avaliação registrada."
+                pageMessage = "Avaliação registrada."
+
+            } else {
+                pageMessage = "Campo de título é obrigatório. Nenhuma avaliação foi registrada."
+            }
 
         } catch (Exception e) {
             pageMessage = "Ocorreu um erro."
@@ -128,6 +132,7 @@ class EvaluationController {
     }
 
     def saveEvaluation(Evaluation evaluation) {
-        evaluation.save()
+        if (Evaluation.findByTitle(evaluation.title) == null)
+            evaluation.save()
     }
 }
